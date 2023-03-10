@@ -1,0 +1,9 @@
+version: "3.0"
+services:
+  coap_server:
+    image: hades-controller
+    build: .
+    network_mode: "host"
+    ports:
+      - "8080:8080"
+
