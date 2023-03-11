@@ -1,6 +1,7 @@
 from flask import Flask
 import random
 import json
+import sys
 
 app = Flask(__name__)
 
@@ -11,8 +12,9 @@ drones = []
 @app.before_first_request
 def create_random_drones():
     # create random drones
+    print("test", file=sys.stderr, flush=True)
     for i in range(0,6):
-        drones.append({'id': i, 'location': [random.randint(0, 50), random.randint(0, 50)], random.randint(0, 50)]})
+        drones.append({'id': i, 'location': [random.randint(0, 50), random.randint(0, 50), random.randint(0, 50)]})
 
 @app.route("/")
 def hello_world():
@@ -47,5 +49,5 @@ def drone(droneid):
             if drone['id'] == droneid:
                 return json.dumps(drone), 200
         return "drone not found", 418
-    elif request.method == "POST":
+    #elif request.method == "POST":
         

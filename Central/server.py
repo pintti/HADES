@@ -2,6 +2,7 @@ from flask import Flask
 import numpy as np
 import math
 import heapq
+import sys
 
 from typing import List
 
@@ -62,7 +63,7 @@ def print_matrix_area(area: List[int], matrix) -> None:
     if abs(col - 5) < 5:
         col_mod = abs(col - 5)
     print_matrix = matrix[height, row-row_mod:row+5, col-col_mod:col+5]
-    print(print_matrix)
+    print(print_matrix, file=sys.stderr, flush=True)
 
 
 def connect_processor():
@@ -82,7 +83,7 @@ def process_processor(processor):
 
 def create_demo_processor():
     """Creates a demo processor to be used for demoing purposes."""
-    print("Demo mode")
+    print("Demo mode", file=sys.stderr, flush=True)
     area = create_area()
     processor_dict[0] = {
         'area': area,
@@ -116,7 +117,8 @@ def get_drone_steps(drone_dict, area):
     for i, step in enumerate(steps):
         steps[i] = np.array(step)
     drone_dict['steps'] = steps
-    print(drone_dict)
+    print(drone_dict, file=sys.stderr, flush=True)
+    
     # send steps through HTTP
     
 
@@ -152,6 +154,13 @@ def astar(matrix, start, goal):
                     heapq.heappush(heap, (priority, neighbor))
     return None
 
+connect_processor()
+
+
+
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
 
 if __name__ == "__main__":
     connect_processor()
