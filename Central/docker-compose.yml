@@ -1,0 +1,9 @@
+version: "3.0"
+services:
+  processor:
+    image: hades-central
+    build: .
+    network_mode: "host"
+    ports:
+      - "8000:8000"
+

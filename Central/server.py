@@ -1,7 +1,8 @@
-import flask
+from flask import Flask
 import numpy as np
 from typing import List
 
+app = Flask(__name__)
 
 processor_dict = {}
 

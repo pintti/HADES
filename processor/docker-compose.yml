@@ -1,0 +1,9 @@
+version: "3.0"
+services:
+  processor:
+    image: hades-processor
+    build: .
+    network_mode: "host"
+    ports:
+      - "8080:8080"
+
