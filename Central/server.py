@@ -3,6 +3,9 @@ import numpy as np
 import math
 import heapq
 import sys
+import time
+import http
+import json
 
 from typing import List
 
@@ -98,7 +101,51 @@ def create_demo_processor():
         }
     }
     processor_dict[0]['spawn'][0] = 0 # sets spawn to ground point
-
+    
+    processor_dict[1] = {
+        'address': "localhost:8080",
+        'area': area,
+        'spawn': get_rand_point(area),
+        'drones': {
+            0: {
+                'location': get_rand_point(area),
+                'goal': get_rand_point(area),
+                'moving': False,
+                'steps': []
+            }
+        }
+    }
+    
+    conn = http.client.HTTPConnection('localhost:8080')
+    conn.request("GET", "/drones")
+    response = conn.getresponse()
+    
+    json.loads(bytes('[{"id": 0, "location": [34, 33, 49], "steps": [], "moving": false}, {"id": 1, "location": [17, 40, 12], "steps": [], "moving": false}, {"id": 2, "location": [11, 20, 26], "steps": [], "moving": false}, {"id": 3, "location": [44, 3, 43], "steps": [], "moving": false}, {"id": 4, "location": [6, 35, 43], "steps": [], "moving": false}, {"id": 5, "location": [10, 2, 28], "steps": [], "moving": false}]', "utf-8"));
+    print(bytes('[{"id": 0, "location": [34, 33, 49], "steps": [], "moving": false}, {"id": 1, "location": [17, 40, 12], "steps": [], "moving": false}, {"id": 2, "location": [11, 20, 26], "steps": [], "moving": false}, {"id": 3, "location": [44, 3, 43], "steps": [], "moving": false}, {"id": 4, "location": [6, 35, 43], "steps": [], "moving": false}, {"id": 5, "location": [10, 2, 28], "steps": [], "moving": false}]', "utf-8"), file=sys.stderr, flush=True)
+    i = 1
+    print(response.read(), file=sys.stderr, flush=True)
+    responsejson = json.loads(response.read())
+    
+    for drone in responsejson:
+        processor_dict[1]['drones'][i] = {'location': drone["location"], 'moving': drone["moving"], 'steps': drone["steps"], 'goal': get_rand_point(area)}
+        i += 1
+    
+    print(processor_dict[1]['drones'], file=sys.stderr, flush=True)
+    """processor_dict[2] = {
+        'address': "localhost:8081",
+        'area': area,
+        'spawn': get_rand_point(area),
+        'drones': {
+            0: {
+                'location': get_rand_point(area),
+                'goal': get_rand_point(area),
+                'moving': False,
+                'steps': []
+            }
+        }
+    }
+    """
+    
 
 def get_rand_point(area):
     """Randomize a goal position for a drone."""
@@ -154,6 +201,9 @@ def astar(matrix, start, goal):
                     heapq.heappush(heap, (priority, neighbor))
     return None
 
+
+print("waiting for processors", file=sys.stderr, flush=True)
+time.sleep(4)
 connect_processor()
 
 

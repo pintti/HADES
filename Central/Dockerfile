@@ -1,4 +1,4 @@
-FROM python:3.10.10-bullseye
+FROM python:3.9.16-bullseye
 
 WORKDIR /app
 
@@ -7,6 +7,6 @@ RUN pip3 install -r requirements.txt
 
 COPY . /app
 EXPOSE 8000:8000
-CMD ["gunicorn", "--preload", "--bind", "0.0.0.0:8000", "-w", "1", "wsgi:app", "--log-level", "debug", "--capture-output"]
+CMD ["gunicorn", "--preload", "--bind", "0.0.0.0:8000", "-w", "1", "wsgi:app", "--log-level", "info", "--capture-output"]
 
-#CMD ["python", "server.py"]
+

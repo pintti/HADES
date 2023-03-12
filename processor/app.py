@@ -12,9 +12,8 @@ drones = []
 @app.before_first_request
 def create_random_drones():
     # create random drones
-    print("test", file=sys.stderr, flush=True)
     for i in range(0,6):
-        drones.append({'id': i, 'location': [random.randint(0, 50), random.randint(0, 50), random.randint(0, 50)]})
+        drones.append({'id': i, 'location': [random.randint(0, 50), random.randint(0, 50), random.randint(0, 50)], 'steps': [], 'moving': False})
 
 @app.route("/")
 def hello_world():
@@ -33,10 +32,10 @@ def get_drones_list():
     """
     get list of all drones
     """
-    drones_list = ""
+    drones_list = []
     for drone in drones:
-        drones_list += json.dumps(drone)
-    return drones_list, 200
+        drones_list.append(drone)
+    return json.dumps(drones_list), 200
 
 @app.route("/drones/<int:droneid>", methods=["GET", "POST"])
 def drone(droneid):
