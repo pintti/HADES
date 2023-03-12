@@ -1,13 +1,12 @@
-from flask import Flask
+from flask import Flask, request
 import random
 import json
-import sys
 
 app = Flask(__name__)
 
-
 processorid = 0
 drones = []
+
 
 @app.before_first_request
 def create_random_drones():

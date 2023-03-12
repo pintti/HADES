@@ -1,4 +1,5 @@
-from flask import Flask
+from flask import Flask, jsonify, request
+import requests as req
 import numpy as np
 import math
 import heapq
@@ -12,6 +13,52 @@ from typing import List
 app = Flask(__name__)
 
 processor_dict = {}
+
+
+@app.route("/connect", methods=["GET"])
+def connect_processor():
+    """Connects a new processor to the server and creates all necessary information to be processed"""
+    if request.method == "GET":
+        new_processor_id = len(processor_dict)
+        area = create_area()
+        processor_dict[new_processor_id] = {
+            "area": area,
+            "spawn": get_rand_point(area),
+            "drones": {}
+        }
+        processor_dict[new_processor_id]["spawn"][0] = 0
+        print("New processor added")
+        print(processor_dict[new_processor_id])
+    return str(new_processor_id), 200
+
+
+@app.route("/add_drone", methods=["POST"])
+def add_new_drone():
+    """Adds a new drone to the network
+    Requires the post JSON to have an id and a drone information"""
+    if request.method == "POST":
+        try:
+            processor_id = request.json["id"]
+            drone_json = request.json["drone"]
+            add_drone_to_processor(processor_id, drone_json)
+        except KeyError:
+            return "No ID or Drone information", 400
+
+
+@app.route("/")
+def hello_world():
+    return "<p>Hello, World!</p>"
+
+
+def add_drone_to_processor(processor_id, drone_info):
+    """Adds drone information to the dict
+    Args:
+        processor_id: int belonging to that processor
+        drone_info: a json object containing information regarding the drone"""
+    drone_id = drone_info["id"]
+    drone_location = drone_info["location"]
+    processor_dict[processor_id]["drones"][drone_id]
+
 
 
 def create_area():
@@ -69,82 +116,10 @@ def print_matrix_area(area: List[int], matrix) -> None:
     print(print_matrix, file=sys.stderr, flush=True)
 
 
-def connect_processor():
-    """Connects a new processor to the server and creates all necessary information to be processed"""
-    if processor_dict:
-        pass
-    else:
-        create_demo_processor()
-        process_processor(processor_dict[0])
-
-
 def process_processor(processor):
     for drone_num in processor['drones']:
         if not processor['drones'][drone_num]['moving']:
             get_drone_steps(processor['drones'][drone_num], processor['area'])
-
-
-def create_demo_processor():
-    """Creates a demo processor to be used for demoing purposes."""
-    print("Demo mode", file=sys.stderr, flush=True)
-    area = create_area()
-    processor_dict[0] = {
-        'area': area,
-        'spawn': get_rand_point(area),
-        'drones': {
-            0: {
-                'location': get_rand_point(area),
-                'goal': get_rand_point(area),
-                'moving': False,
-                'steps': []
-            }
-        }
-    }
-    processor_dict[0]['spawn'][0] = 0 # sets spawn to ground point
-    
-    processor_dict[1] = {
-        'address': "localhost:8080",
-        'area': area,
-        'spawn': get_rand_point(area),
-        'drones': {
-            0: {
-                'location': get_rand_point(area),
-                'goal': get_rand_point(area),
-                'moving': False,
-                'steps': []
-            }
-        }
-    }
-    
-    conn = http.client.HTTPConnection('localhost:8080')
-    conn.request("GET", "/drones")
-    response = conn.getresponse()
-    
-    json.loads(bytes('[{"id": 0, "location": [34, 33, 49], "steps": [], "moving": false}, {"id": 1, "location": [17, 40, 12], "steps": [], "moving": false}, {"id": 2, "location": [11, 20, 26], "steps": [], "moving": false}, {"id": 3, "location": [44, 3, 43], "steps": [], "moving": false}, {"id": 4, "location": [6, 35, 43], "steps": [], "moving": false}, {"id": 5, "location": [10, 2, 28], "steps": [], "moving": false}]', "utf-8"));
-    print(bytes('[{"id": 0, "location": [34, 33, 49], "steps": [], "moving": false}, {"id": 1, "location": [17, 40, 12], "steps": [], "moving": false}, {"id": 2, "location": [11, 20, 26], "steps": [], "moving": false}, {"id": 3, "location": [44, 3, 43], "steps": [], "moving": false}, {"id": 4, "location": [6, 35, 43], "steps": [], "moving": false}, {"id": 5, "location": [10, 2, 28], "steps": [], "moving": false}]', "utf-8"), file=sys.stderr, flush=True)
-    i = 1
-    print(response.read(), file=sys.stderr, flush=True)
-    responsejson = json.loads(response.read())
-    
-    for drone in responsejson:
-        processor_dict[1]['drones'][i] = {'location': drone["location"], 'moving': drone["moving"], 'steps': drone["steps"], 'goal': get_rand_point(area)}
-        i += 1
-    
-    print(processor_dict[1]['drones'], file=sys.stderr, flush=True)
-    """processor_dict[2] = {
-        'address': "localhost:8081",
-        'area': area,
-        'spawn': get_rand_point(area),
-        'drones': {
-            0: {
-                'location': get_rand_point(area),
-                'goal': get_rand_point(area),
-                'moving': False,
-                'steps': []
-            }
-        }
-    }
-    """
     
 
 def get_rand_point(area):
@@ -200,17 +175,3 @@ def astar(matrix, start, goal):
                     parents[neighbor] = current
                     heapq.heappush(heap, (priority, neighbor))
     return None
-
-
-print("waiting for processors", file=sys.stderr, flush=True)
-time.sleep(4)
-connect_processor()
-
-
-
-@app.route("/")
-def hello_world():
-    return "<p>Hello, World!</p>"
-
-if __name__ == "__main__":
-    connect_processor()
