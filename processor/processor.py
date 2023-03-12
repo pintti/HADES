@@ -2,6 +2,7 @@ import requests as req
 import time
 import random
 import json
+import sys
 
 own_port = 5000
 main_server_url = "http://localhost:8080"
@@ -34,7 +35,7 @@ def move_drone(drone):
     """Move drone one step and send a step confirm to main server
     Args: 
         drone: drone information"""
-    print("Not done yet, putting in input here so you can break out of this loop")
+    print("Not done yet, putting in input here so you can break out of this loop", file=sys.stderr, flush=True)
     input()
 
 
@@ -55,7 +56,7 @@ def create_drones():
 
 def main_server_down():
     wait_time = 10
-    print(f"Main server not on, waiting for {wait_time}")
+    print(f"Main server not on, waiting for {wait_time}", file=sys.stderr, flush=True)
     time.sleep(wait_time)
 
 

@@ -27,8 +27,8 @@ def connect_processor():
             "drones": {}
         }
         processor_dict[new_processor_id]["spawn"][0] = 0
-        print("New processor added")
-        print(processor_dict[new_processor_id])
+        print("New processor added", file=sys.stderr, flush=True)
+        print(processor_dict[new_processor_id], file=sys.stderr, flush=True)
     return str(new_processor_id), 200
 
 
