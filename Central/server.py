@@ -40,7 +40,9 @@ def add_new_drone():
         try:
             processor_id = request.json["id"]
             drone_json = request.json["drone"]
-            add_drone_to_processor(processor_id, drone_json)
+            processor_area = processor_dict[processor_id]["area"]
+            steps = add_drone_to_processor(processor_id, drone_json, processor_area)
+            return steps, 200
         except KeyError:
             return "No ID or Drone information", 400
 
@@ -50,14 +52,21 @@ def hello_world():
     return "<p>Hello, World!</p>"
 
 
-def add_drone_to_processor(processor_id, drone_info):
+def add_drone_to_processor(processor_id, drone_info, processor_area):
     """Adds drone information to the dict
     Args:
         processor_id: int belonging to that processor
         drone_info: a json object containing information regarding the drone"""
     drone_id = drone_info["id"]
     drone_location = drone_info["location"]
-    processor_dict[processor_id]["drones"][drone_id]
+    goal = get_rand_point(processor_area)
+    processor_dict[processor_id]["drones"][drone_id] = {
+        "location": drone_location,
+        "goal": goal,
+        "steps": get_drone_steps(drone_location, goal, processor_area),
+        "moving": False
+    }
+    return processor_dict[processor_id]["drones"][drone_id]["steps"]
 
 
 
@@ -131,15 +140,8 @@ def get_rand_point(area):
             return [rand_height, rand_row, rand_col]
 
 
-def get_drone_steps(drone_dict, area):
-    drone_dict['moving'] = True
-    loc = drone_dict['location']
-    goal = drone_dict['goal']
-    steps = astar(area, tuple(loc), tuple(goal))
-    for i, step in enumerate(steps):
-        steps[i] = np.array(step)
-    drone_dict['steps'] = steps
-    print(drone_dict, file=sys.stderr, flush=True)
+def get_drone_steps(loc, goal, area):
+    return astar(area, tuple(loc), tuple(goal))
     
     # send steps through HTTP
     
