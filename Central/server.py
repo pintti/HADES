@@ -27,8 +27,7 @@ def connect_processor():
             "drones": {}
         }
         processor_dict[new_processor_id]["spawn"][0] = 0
-        print("New processor added")
-        print(processor_dict[new_processor_id])
+        print("New processor added", file=sys.stderr, flush=True)
     return str(new_processor_id), 200
 
 
@@ -45,11 +44,55 @@ def add_new_drone():
             return steps, 200
         except KeyError:
             return "No ID or Drone information", 400
+        
+
+@app.route("/drone", methods=["POST"])
+def get_drone_step():
+    """Get the drone step from processor and handle it correctly.
+    Requires the JSON format to be in the next format:
+    {"id": processor ID, "drone_id": drone ID, "drone_loc": location of the drone}"""
+    if request.method == "POST":
+        try:
+            processor_id = request.json["id"]
+            drone_id = request.json["drone_id"]
+            drone_location = request.json["drone_loc"]
+            success, msg = handle_drone_step(processor_id, drone_id, drone_location)
+            if success:
+                return msg, 200
+            else:
+                return msg, 400
+        except KeyError:
+            return "No ID or Drone information", 400
 
 
 @app.route("/")
 def hello_world():
     return "<p>Hello, World!</p>"
+
+
+def handle_drone_step(processor_id, drone_id, drone_location):
+    """Function for handling the new drone information. Updates new location and removes the required steps
+    from drone dict."""
+    try:
+        drone_dict = processor_dict[processor_id]["drones"][drone_id]
+        update_drone_loc_visual(drone_location, processor_id, drone_id)
+        drone_dict["location"] = drone_location
+        if drone_dict["steps"]:
+            if drone_location in drone_dict["steps"]:
+                drone_loc_index = drone_dict["steps"].index(drone_location)
+                drone_dict["steps"] = drone_dict["steps"][drone_loc_index:]
+        print_matrix_area(drone_location, processor_dict[processor_id]["area"])
+        return True, "Drone step complete"
+    except KeyError:
+        return False, "ID not found!"
+
+
+def update_drone_loc_visual(drone_location, processor_id, drone_id):
+    old_loc = processor_dict[processor_id]["drones"][drone_id]["location"]
+    processor_dict[processor_id]["area"][old_loc[0]][old_loc[1]][old_loc[2]] = 0
+    processor_dict[processor_id]["area"][drone_location[0]][drone_location[1]][drone_location[2]] = drone_id
+    print(old_loc, file=sys.stderr, flush=True)
+    print(drone_location, file=sys.stderr, flush=True)
 
 
 def add_drone_to_processor(processor_id, drone_info, processor_area):
@@ -60,14 +103,15 @@ def add_drone_to_processor(processor_id, drone_info, processor_area):
     drone_id = drone_info["id"]
     drone_location = drone_info["location"]
     goal = get_rand_point(processor_area)
+    processor_area[drone_location[0]][drone_location[1]][drone_location[2]] = drone_id
     processor_dict[processor_id]["drones"][drone_id] = {
         "location": drone_location,
         "goal": goal,
         "steps": get_drone_steps(drone_location, goal, processor_area),
         "moving": False
     }
+    print_matrix_area(drone_location, processor_area)
     return processor_dict[processor_id]["drones"][drone_id]["steps"]
-
 
 
 def create_area():
@@ -76,7 +120,7 @@ def create_area():
         matrix: area matrix that has obstacles"""
     matrix = np.zeros([4,50,50])
     no_go_areas = []
-    while len(no_go_areas) < 5:
+    while len(no_go_areas) < 20:
         rand = np.random.randint(0, 50, size=2)
         add_flag = 1
         if no_go_areas:
@@ -141,9 +185,7 @@ def get_rand_point(area):
 
 
 def get_drone_steps(loc, goal, area):
-    return astar(area, tuple(loc), tuple(goal))
-    
-    # send steps through HTTP
+    return astar(area, tuple(loc), tuple(goal))[1:]
     
 
 def heuristic(node, goal):
