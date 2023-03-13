@@ -19,6 +19,8 @@ database = None
 @app.route("/connect", methods=["GET"])
 def connect_processor():
     """Connects a new processor to the server and creates all necessary information to be processed"""
+    global database
+    database = create_db_connection()
     if request.method == "GET":
         new_processor_id = len(processor_dict)
         area = create_area()
@@ -29,6 +31,7 @@ def connect_processor():
         }
         processor_dict[new_processor_id]["spawn"][0] = 0
         print("New processor added", file=sys.stderr, flush=True)
+        add_new_processor(new_processor_id, area, processor_dict[new_processor_id]["spawn"])
     return str(new_processor_id), 200
 
 
@@ -166,7 +169,13 @@ def print_matrix_area(area: List[int], matrix) -> None:
         row_mod = abs(row - 5)
     if abs(col - 5) < 5:
         col_mod = abs(col - 5)
-    print_matrix = matrix[height, row-row_mod:row+5, col-col_mod:col+5]
+    rower = row-row_mod
+    coler = col-col_mod
+    while rower < 0:
+        rower += 1
+    while coler < 0:
+        coler += 1
+    print_matrix = matrix[height, rower:row+5, coler:col+5]
     print(print_matrix, file=sys.stderr, flush=True)
     time.sleep(1)
 
@@ -229,13 +238,13 @@ def create_db_connection():
     db_pass = "notsecret"
     db_host = "db"
     db_port = "5432"
-    db_string = 'postgresql://{}:{}@{}:{}/{}'.format(db_user, db_pass, db_host, db_port, db_name)
-    db = create_engine(db_string)
+    
     return db
 
 
 def add_new_processor(processor_id, processor_area, processor_spawn):
     """Add new row into processor database"""
+    print("Adding processor to database", file=sys.stderr, flush=True)
     database.execute(f"INSERT INTO processors (id, area, spawn) VALUES ({processor_id}, {processor_area}, {processor_spawn})")
 
 def add_new_drone(processor_id, drone_id, drone_loc, drone_goal):
