@@ -27,7 +27,7 @@ def main():
         else:
             get_drone_steps()
             for drone in drones:
-                if drone["steps"] and drone["moving"] == False:
+                if drone["steps"]:
                     move_drone(drone)
 
 
@@ -36,19 +36,28 @@ def move_drone(drone):
     Args: 
         drone: drone information"""
     step = drone["steps"].pop(0)
-    req.post(main_server_url+"/drone", json={"id": SelfId, "drone_id": drone["id"], "drone_loc": step})
-    print("Not done yet, putting in input here so you can break out of this loop")
-    #input()
+    drone_id = drone["id"]
+    print(f"Drone {drone_id} moving to {step}", file=sys.stderr, flush=True)
+    req.post(main_server_url+"/drone", json={"id": SelfId, "drone_id": drone_id, "drone_loc": step})
+    time.sleep(1)
 
 
 def get_drone_steps():
     for drone in drones:
-        if drone["steps"] == []:
+        drone_id = drone["id"]
+        if drone["steps"] == [] and drone["moving"] is False:
             try:
+                print(f"Getting movement for drone {drone_id}.", file=sys.stderr, flush=True)
                 drone_steps = req.post(main_server_url+"/add_drone", json={"id": SelfId, "drone": drone})
                 drone["steps"] = json.loads(drone_steps.content.decode("utf8"))
             except req.ConnectionError:
                 main_server_down()
+        elif drone["steps"] == []:
+            print(f"Drone {drone_id} has finished movement.", file=sys.stderr, flush=True)
+            time.sleep(3)
+            drone["moving"] = False
+        else:
+            drone["moving"] = True
 
 
 def create_drones():
@@ -57,7 +66,7 @@ def create_drones():
 
 
 def main_server_down():
-    wait_time = 10
+    wait_time = 5
     print(f"Main server not on, waiting for {wait_time}", file=sys.stderr, flush=True)
     time.sleep(wait_time)
 
