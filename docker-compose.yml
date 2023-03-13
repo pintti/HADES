@@ -11,4 +11,18 @@ services:
     build: ./processor/.
     network_mode: "host"
 
-
+  db:
+    image: postgres:15.2-bullseye
+    network_mode: "host"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-db:/data/postgres
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      PGDATA: /data/postgres
+      
+volumes:
+  postgres-db:
+    driver: local
