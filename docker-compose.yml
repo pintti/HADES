@@ -1,4 +1,4 @@
-version: "3.0"
+version: "3.8"
 services:
   central:
     image: hades-central
@@ -17,12 +17,13 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - ./postgres-db:/data/postgres
+      - ./postgres-db:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     environment:
       POSTGRES_USER: HADES_main
       POSTGRES_PASSWORD: notsecret
       POSTGRES_DB: HADES_db
-      PGDATA: /data/postgres
+      PGDATA: /var/lib/postgresql/data
     user: 1000:1000
       
 volumes:
