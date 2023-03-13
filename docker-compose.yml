@@ -17,12 +17,13 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres-db:/data/postgres
+      - ./postgres-db:/data/postgres
     environment:
       POSTGRES_USER: HADES_main
       POSTGRES_PASSWORD: notsecret
       POSTGRES_DB: HADES_db
       PGDATA: /data/postgres
+    user: 1000:1000
       
 volumes:
   postgres-db:
