@@ -6,14 +6,22 @@ import numpy as np
 import heapq
 import sys
 import time
-
+import pickle
+import psycopg2
 
 
 app = Flask(__name__)
 
 processor_dict = {}
 
-database = None
+
+
+conn = psycopg2.connect(
+        host="localhost",
+        port=5432,
+        database="HADES_db",
+        user='HADES_main',
+        password='notsecret')
 
 
 @app.route("/connect", methods=["GET"])
@@ -27,7 +35,7 @@ def connect_processor():
             "spawn": get_rand_point(area),
             "drones": {}
         }
-        processor_dict[new_processor_id]["spawn"][0] = 0
+        add_new_processor(new_processor_id, area, processor_dict[new_processor_id]["spawn"])
         print("New processor added", file=sys.stderr, flush=True)
     return str(new_processor_id), 200
 
@@ -223,39 +231,55 @@ def astar(matrix, start, goal):
     return None
 
 
-def create_db_connection():
-    db_name = "HADES_db"
-    db_user = "HADES_main"
-    db_pass = "notsecret"
-    db_host = "db"
-    db_port = "5432"
-    db_string = 'postgresql://{}:{}@{}:{}/{}'.format(db_user, db_pass, db_host, db_port, db_name)
-    db = create_engine(db_string)
-    return db
+
 
 
 def add_new_processor(processor_id, processor_area, processor_spawn):
     """Add new row into processor database"""
-    database.execute(f"INSERT INTO processors (id, area, spawn) VALUES ({processor_id}, {processor_area}, {processor_spawn})")
+    cur = conn.cursor()
+    cur.execute("INSERT INTO processors (id, area, spawn) VALUES (%s, %s, %s)", (processor_id, pickle.dumps(processor_area), pickle.dumps(processor_spawn)))
+    conn.commit()
+    cur.close()
 
 def add_new_drone(processor_id, drone_id, drone_loc, drone_goal):
-    """Add new drone into drone database"""
-    database.execute(f"INSERT INTO drones (processor_id, drone_id, drone_loc, drone_goal) VALUES ({processor_id}, {drone_id}, {drone_loc}, {drone_goal})")
+    """Add new drone into drone database"""    
+    cur = conn.cursor()
+    cur.execute("INSERT INTO drones (processor_id, drone_id, drone_loc, drone_goal) VALUES (%s, %s, %s, %s)", (processor_id, drone_id,  pickle.dumps(drone_loc), pickle.dumps(drone_goal)))
+    conn.commit()
+    cur.close()
 
-def get_processor_info_by_id(processor_id):
-    query = f"SELECT * FROM processors WHERE id == {processor_id}"
-    result = database.execute(query)
+def get_processor_info_by_id(processor_id):    
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM processors WHERE id == %s", (processor_id))
+    result = cur.fetchall()
+    cur.close()
+    
+    for i, item in result:
+        result[i] = [result[i][0], pickle.loads(result[i][1]), pickle.loads(result[i][2])]
+    
     print(result)
     return result
 
-def get_drones_by_processor_id(processor_id):
-    query = f"SELECT * FROM drones WHERE processor_id == {processor_id}"
-    result = database.execute(query)
+def get_drones_by_processor_id(processor_id):    
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM drones WHERE processor_id == %s", (processor_id))
+    result = cur.fetchall()
+    cur.close()
+    
+    for i, item in result:
+        result[i] = [result[i][0], result[i][1], pickle.loads(result[i][2]), pickle.loads(result[i][3])]
+    
     print(result)
     return result
 
 def get_processors():
-    query = f"SELECT * FROM processors"
-    result = database.execute(query)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM processors")
+    result = cur.fetchall()
+    cur.close()
+    
+    for i, item in result:
+        result[i] = [result[i][0], pickle.loads(result[i][1]), pickle.loads(result[i][2])]
+    
     print(result)
     return result
