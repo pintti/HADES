@@ -19,8 +19,9 @@ services:
     volumes:
       - postgres-db:/data/postgres
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
+      POSTGRES_USER: HADES_main
+      POSTGRES_PASSWORD: notsecret
+      POSTGRES_DB: HADES_db
       PGDATA: /data/postgres
       
 volumes:
