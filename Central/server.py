@@ -1,18 +1,18 @@
 from flask import Flask, jsonify, request
+from typing import List
+from sqlalchemy import create_engine
 import requests as req
 import numpy as np
-import math
 import heapq
 import sys
-import time
-import http
-import json
 
-from typing import List
+
 
 app = Flask(__name__)
 
 processor_dict = {}
+
+database = None
 
 
 @app.route("/connect", methods=["GET"])
@@ -219,3 +219,41 @@ def astar(matrix, start, goal):
                     parents[neighbor] = current
                     heapq.heappush(heap, (priority, neighbor))
     return None
+
+
+def create_db_connection():
+    db_name = "HADES_db"
+    db_user = "HADES_main"
+    db_pass = "notsecret"
+    db_host = "db"
+    db_port = "5432"
+    db_string = 'postgresql://{}:{}@{}:{}/{}'.format(db_user, db_pass, db_host, db_port, db_name)
+    db = create_engine(db_string)
+    return db
+
+
+def add_new_processor(processor_id, processor_area, processor_spawn):
+    """Add new row into processor database"""
+    database.execute(f"INSERT INTO processors (id, area, spawn) VALUES ({processor_id}, {processor_area}, {processor_spawn})")
+
+def add_new_drone(processor_id, drone_id, drone_loc, drone_goal):
+    """Add new drone into drone database"""
+    database.execute(f"INSERT INTO drones (processor_id, drone_id, drone_loc, drone_goal) VALUES ({processor_id}, {drone_id}, {drone_loc}, {drone_goal})")
+
+def get_processor_info_by_id(processor_id):
+    query = f"SELECT * FROM processors WHERE id == {processor_id}"
+    result = database.execute(query)
+    print(result)
+    return result
+
+def get_drones_by_processor_id(processor_id):
+    query = f"SELECT * FROM drones WHERE processor_id == {processor_id}"
+    result = database.execute(query)
+    print(result)
+    return result
+
+def get_processors():
+    query = f"SELECT * FROM processors"
+    result = database.execute(query)
+    print(result)
+    return result
