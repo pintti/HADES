@@ -13,4 +13,4 @@ docker-compose build
 docker-compose up
 ```
 
-This should initialize and setup the server 
+This should initialize and setup the server, processors and the database.

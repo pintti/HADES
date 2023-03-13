@@ -5,6 +5,7 @@ import requests as req
 import numpy as np
 import heapq
 import sys
+import time
 
 
 
@@ -167,6 +168,7 @@ def print_matrix_area(area: List[int], matrix) -> None:
         col_mod = abs(col - 5)
     print_matrix = matrix[height, row-row_mod:row+5, col-col_mod:col+5]
     print(print_matrix, file=sys.stderr, flush=True)
+    time.sleep(1)
 
 
 def process_processor(processor):
