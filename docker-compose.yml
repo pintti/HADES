@@ -14,14 +14,16 @@ services:
   db:
     image: postgres:15.2-bullseye
     environment: 
+      POSTGRES_NAME: HADES_postgres
+      POSTGRES_DB: HADES_db
       POSTGRES_USER: HADES_main
       POSTGRES_PASSWORD: notsecret
     network_mode: "host"
     ports:
       - "5432:5432"
     volumes:
+      - ./db:/docker-entrypoint-initdb.d/
       - ./postgres-db:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
 
       
 volumes:

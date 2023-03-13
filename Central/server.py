@@ -13,20 +13,12 @@ app = Flask(__name__)
 
 processor_dict = {}
 
-
-
-conn = psycopg2.connect(
-        host="localhost",
-        port=5432,
-        database="HADES_db",
-        user='HADES_main',
-        password='notsecret')
+conn = None
 
 
 @app.route("/connect", methods=["GET"])
 def connect_processor():
     """Connects a new processor to the server and creates all necessary information to be processed"""
-    global database
     if request.method == "GET":
         new_processor_id = len(processor_dict)
         area = create_area()
@@ -35,10 +27,10 @@ def connect_processor():
             "spawn": get_rand_point(area),
             "drones": {}
         }
-        add_new_processor(new_processor_id, area, processor_dict[new_processor_id]["spawn"])
         print("New processor added", file=sys.stderr, flush=True)
         add_new_processor(new_processor_id, area, processor_dict[new_processor_id]["spawn"])
-    return str(new_processor_id), 200
+        return str(new_processor_id), 200
+    
 
 
 @app.route("/add_drone", methods=["POST"])
@@ -121,6 +113,7 @@ def add_drone_to_processor(processor_id, drone_info, processor_area):
         "moving": False
     }
     print_matrix_area(drone_location, processor_area)
+    add_new_drone(processor_id, drone_id, drone_location, goal)
     return processor_dict[processor_id]["drones"][drone_id]["steps"]
 
 
@@ -242,10 +235,20 @@ def astar(matrix, start, goal):
 
 def add_new_processor(processor_id, processor_area, processor_spawn):
     """Add new row into processor database"""
+    global conn
+    time.sleep(5)
+    if conn == None:
+        conn = psycopg2.connect(
+        host="localhost",
+        port=5432,
+        database="HADES_db",
+        user='HADES_main',
+        password='notsecret')
     cur = conn.cursor()
     cur.execute("INSERT INTO processors (id, area, spawn) VALUES (%s, %s, %s)", (processor_id, pickle.dumps(processor_area), pickle.dumps(processor_spawn)))
     conn.commit()
     cur.close()
+    print(f"Processor {processor_id} added to database", file=sys.stderr, flush=True)
 
 def add_new_drone(processor_id, drone_id, drone_loc, drone_goal):
     """Add new drone into drone database"""    
@@ -253,6 +256,7 @@ def add_new_drone(processor_id, drone_id, drone_loc, drone_goal):
     cur.execute("INSERT INTO drones (processor_id, drone_id, drone_loc, drone_goal) VALUES (%s, %s, %s, %s)", (processor_id, drone_id,  pickle.dumps(drone_loc), pickle.dumps(drone_goal)))
     conn.commit()
     cur.close()
+    print(f"Drone {drone_id} for processor {processor_id} added to database", file=sys.stderr, flush=True)
 
 def get_processor_info_by_id(processor_id):    
     cur = conn.cursor()
